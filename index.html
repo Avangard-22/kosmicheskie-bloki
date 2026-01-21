@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <title>Космический Кликер</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css  ">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron  :wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <!-- Canvas для планетарного фона -->
+  <canvas id="planetBackgroundCanvas"></canvas>
+  <!-- UI -->
+  <div id="header">
+    <h2 id="gameTitle">☿ Меркурий</h2>
+  </div>
+  <!-- Кнопка сохранения -->
+  <button id="saveBtn" title="Сохранить игру">
+    <i class="fas fa-save"></i>
+  </button>
+  <!-- HUD -->
+  <div id="hud-left">
+    <div class="hud-item" id="coins"><i class="fas fa-gem"></i> Кристаллы: <span id="coins-value">0</span></div>
+    <div class="hud-item" id="clickPowerInfo"><i class="fas fa-fist-raised"></i> Сила: <span id="clickPower-value">1</span></div>
+    <div class="hud-item" id="critChanceInfo"><i class="fas fa-star"></i> Крит: <span id="critChance-value">0.1%</span></div>
+    <div class="hud-item" id="critMultiplierInfo"><i class="fas fa-star"></i> Множ: <span id="critMultiplier-value">x2.0</span></div>
+  </div>
+  <!-- ПРОГРЕСС-БАР -->
+  <div id="progressContainer">
+    <div id="progressBar"></div>
+  </div>
+  <div id="progressText">Прогресс: 0.00000 / 0.38710 а.е. (0%)</div>
+  <div id="gameArea"></div>
+  <div id="levelAnnounce"></div>
+  <!-- КНОПКИ УЛУЧШЕНИЙ -->
+  <button id="upgradeClickBtn" class="upgrade-btn btn-unavailable">
+    <i class="fas fa-fist-raised"></i>
+    <div class="upgrade-cost">80</div>
+  </button>
+  <button id="upgradeHelperBtn" class="upgrade-btn btn-unavailable">
+    <i class="fas fa-robot"></i>
+    <div class="upgrade-cost">1500</div>
+  </button>
+  <button id="upgradeCritChanceBtn" class="upgrade-btn btn-unavailable">
+    <i class="fas fa-star"></i>
+    <div class="upgrade-cost">500</div>
+  </button>
+  <button id="upgradeCritMultBtn" class="upgrade-btn btn-unavailable">
+    <i class="fas fa-star"></i>
+    <div class="upgrade-cost">800</div>
+  </button>
+  <button id="upgradeHelperDmgBtn" class="upgrade-btn btn-unavailable">
+    <i class="fas fa-bolt"></i>
+    <div class="upgrade-cost">1000</div>
+  </button>
+  <!-- КНОПКИ МАГАЗИНА -->
+  <div id="shopContainer" class="shop-container">
+    <button id="shopBtn" class="shop-btn" title="Магазин">
+      <i class="fas fa-shopping-cart"></i>
+    </button>
+    <div id="shopPanel" class="shop-panel">
+      <h3>🛒 Магазин</h3>
+      <div class="shop-item" id="shopTimeWarp">
+        <i class="fas fa-hourglass-half"></i>
+        <span>Искажение времени (30сек)</span>
+        <div class="shop-cost">250</div>
+      </div>
+      <div class="shop-item" id="shopCrystalBoost">
+        <i class="fas fa-gem"></i>
+        <span>Усилитель кристаллов (1мин)</span>
+        <div class="shop-cost">400</div>
+      </div>
+      <div class="shop-item" id="shopPowerSurge">
+        <i class="fas fa-bolt"></i>
+        <span>Скачок силы (45сек)</span>
+        <div class="shop-cost">300</div>
+      </div>
+    </div>
+  </div>
+  <!-- ПАНЕЛЬ ДОСТИЖЕНИЙ (динамически заполняется) -->
+  <div id="achievementsContainer" class="achievements-container">
+    <button id="achievementsBtn" class="achievements-btn" title="Достижения">
+      <i class="fas fa-trophy"></i>
+    </button>
+    <div id="achievementsPanel" class="achievements-panel">
+      <!-- Динамически заполняется JavaScript -->
+    </div>
+  </div>
+  
+  <div id="tooltip" class="tooltip"></div>
+  <canvas id="particlesCanvas"></canvas>
+  
+  <!-- Звуковые элементы -->
+  <audio id="clickSound" preload="auto">
+    <source src="audio/click.wav" type="audio/wav">
+  </audio>
+  <audio id="breakSound" preload="auto">
+    <source src="audio/break.wav" type="audio/wav">
+  </audio>
+  <audio id="upgradeSound" preload="auto">
+    <source src="audio/upgrade.wav" type="audio/wav">
+  </audio>
+  <audio id="comboSound" preload="auto">
+    <source src="audio/combo.wav" type="audio/wav">
+  </audio>
+  <audio id="helperSound" preload="auto">
+    <source src="audio/helper.wav" type="audio/wav">
+  </audio>
+  
+  <!-- Экраны -->
+  <div id="welcomeScreen">
+    <h2>🚀 КОСМИЧЕСКИЙ КЛИКЕР</h2>
+    <p>Разрушайте восходящие блоки и собирайте <strong>космические Кристаллы</strong>!</p>
+    <p>Каждый блок требует определённого количества ударов для разрушения.</p>
+    <p><strong>Реалистичная система прогресса:</strong></p>
+    <p>🌌 <strong>Астрономические единицы</strong> — перемещайтесь по Солнечной системе</p>
+    <p>🪐 <strong>9 реальных планет</strong> — от Меркурия до Плутона</p>
+    <p>🚀 <strong>Улучшения</strong> — увеличивайте силу, криты и активируйте помощника</p>
+    <p>✨ <strong>Редкие блоки</strong> — дают бонусы и огромные награды!</p>
+    <button id="continueBtn" class="btn no-save">Продолжить</button>
+    <button id="startBtn" class="btn">Новая игра</button>
+    <button id="langBtn-welcome" title="Сменить язык">
+      <span id="currentLangFlag">🇷🇺</span>
+    </button>
+  </div>
+  
+  <div id="saveScreen">
+    <h2>СОХРАНЕНИЕ ИГРЫ</h2>
+    <p>Хотите продолжить с сохраненной игры или начать новую?</p>
+    <button id="loadSaveBtn" class="btn">Продолжить сохраненную игру</button>
+    <button id="newGameBtn" class="btn">Начать новую игру</button>
+    <button id="cancelSaveBtn" class="btn" style="background: #666;">Отмена</button>
+  </div>
+  
+  <div id="gameOverScreen">
+    <h2>ДОБЫЧА ПРЕРВАНА!</h2>
+    <div id="finalScore">Всего урона: 0</div>
+    <button id="restartBtn">Новая добыча</button>
+    <button id="shareBtn">Поделиться</button>
+  </div>
+
+  <!-- Подключение скриптов -->
+  <!-- Удаляем старые скрипты -->
+  <!--
+  <script src="js/translations.js"></script>
+  <script src="js/save-system.js"></script>
+  <script src="js/planet-background.js"></script>
+  <script src="js/game-logic.js"></script>
+  <script src="js/shop.js"></script>
+  <script src="js/achievements.js"></script>
+  -->
+  <!-- Подключаем главный модуль -->
+  <script src="src/main.js" type="module"></script>
+
+  <!-- Блокировка жестов (перенесено из main.js) -->
+  <script>
+    document.addEventListener('touchstart', function(e) {
+      if (e.touches.length > 1) e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('gesturestart', function(e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('gesturechange', function(e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('gestureend', function(e) {
+      e.preventDefault();
+    }, { passive: false });
+  </script>
+
+  <!-- Отладочные функции (остаются) -->
+  <script>
+    // Функция для отладки сохранения
+    function debugSave() {
+      const saved = localStorage.getItem('cosmicBlocksSave');
+      console.log('=== ДЕБАГ СОХРАНЕНИЯ ===');
+      
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          console.log('✅ Сохранение найдено:', {
+            timestamp: new Date(data.timestamp).toLocaleString(),
+            coins: data.gameState?.coins,
+            damage: data.gameState?.totalDamageDealt,
+            location: data.gameState?.currentLocation,
+            version: data.version
+          });
+          
+          // Показываем всплывающее окно с информацией
+          alert(`Сохранение найдено!\nКристаллы: ${data.gameState?.coins}\nУрон: ${data.gameState?.totalDamageDealt}\nПланета: ${data.gameState?.currentLocation}\nВремя: ${new Date(data.timestamp).toLocaleString()}`);
+        } catch (e) {
+          console.error('❌ Ошибка парсинга:', e);
+          alert('Ошибка чтения сохранения!');
+        }
+      } else {
+        console.log('❌ Сохранение не найдено');
+        alert('Сохранение не найдено!');
+      }
+    }
+    
+    // Функция для очистки сохранения
+    function clearSave() {
+      if (confirm('Очистить все сохранения?')) {
+        localStorage.removeItem('cosmicBlocksSave');
+        console.log('🗑️ Сохранение очищено');
+        alert('Сохранение очищено!');
+        // window.updateContinueButton(); // Вызов может быть недоступен, если main.js не загрузился
+        if (typeof window.updateContinueButton === 'function') {
+             window.updateContinueButton();
+        }
+      }
+    }
+    
+    // Экспорт для консоли
+    window.debugSave = debugSave;
+    window.clearSave = clearSave;
+  </script>
+  <div style="position: fixed; bottom: 10px; left: 10px; z-index: 10000; display: none;">
+    <button onclick="debugSave()" style="background: #2196F3; color: white; padding: 5px 10px; border: none; border-radius: 5px; margin: 2px;">Debug Save</button>
+    <button onclick="clearSave()" style="background: #f44336; color: white; padding: 5px 10px; border: none; border-radius: 5px; margin: 2px;">Clear Save</button>
+    <button onclick="console.log(window.gameState)" style="background: #4CAF50; color: white; padding: 5px 10px; border: none; border-radius: 5px; margin: 2px;">Log State</button>
+  </div>
+
+</body>
+</html>
