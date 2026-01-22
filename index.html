@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <title>Космический Кликер</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css  ">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron  :wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -78,13 +78,12 @@
       </div>
     </div>
   </div>
-  <!-- ПАНЕЛЬ ДОСТИЖЕНИЙ (динамически заполняется) -->
+  <!-- ПАНЕЛЬ ДОСТИЖЕНИЙ -->
   <div id="achievementsContainer" class="achievements-container">
     <button id="achievementsBtn" class="achievements-btn" title="Достижения">
       <i class="fas fa-trophy"></i>
     </button>
     <div id="achievementsPanel" class="achievements-panel">
-      <!-- Динамически заполняется JavaScript -->
     </div>
   </div>
   
@@ -92,21 +91,11 @@
   <canvas id="particlesCanvas"></canvas>
   
   <!-- Звуковые элементы -->
-  <audio id="clickSound" preload="auto">
-    <source src="audio/click.wav" type="audio/wav">
-  </audio>
-  <audio id="breakSound" preload="auto">
-    <source src="audio/break.wav" type="audio/wav">
-  </audio>
-  <audio id="upgradeSound" preload="auto">
-    <source src="audio/upgrade.wav" type="audio/wav">
-  </audio>
-  <audio id="comboSound" preload="auto">
-    <source src="audio/combo.wav" type="audio/wav">
-  </audio>
-  <audio id="helperSound" preload="auto">
-    <source src="audio/helper.wav" type="audio/wav">
-  </audio>
+  <audio id="clickSound" preload="auto"><source src="audio/click.wav" type="audio/wav"></audio>
+  <audio id="breakSound" preload="auto"><source src="audio/break.wav" type="audio/wav"></audio>
+  <audio id="upgradeSound" preload="auto"><source src="audio/upgrade.wav" type="audio/wav"></audio>
+  <audio id="comboSound" preload="auto"><source src="audio/combo.wav" type="audio/wav"></audio>
+  <audio id="helperSound" preload="auto"><source src="audio/helper.wav" type="audio/wav"></audio>
   
   <!-- Экраны -->
   <div id="welcomeScreen">
@@ -132,7 +121,7 @@
     <button id="newGameBtn" class="btn">Начать новую игру</button>
     <button id="cancelSaveBtn" class="btn" style="background: #666;">Отмена</button>
   </div>
-  
+
   <div id="gameOverScreen">
     <h2>ДОБЫЧА ПРЕРВАНА!</h2>
     <div id="finalScore">Всего урона: 0</div>
@@ -141,44 +130,73 @@
   </div>
 
   <!-- Подключение скриптов -->
-  <!-- Удаляем старые скрипты -->
-  <!--
   <script src="js/translations.js"></script>
   <script src="js/save-system.js"></script>
   <script src="js/planet-background.js"></script>
   <script src="js/game-logic.js"></script>
   <script src="js/shop.js"></script>
   <script src="js/achievements.js"></script>
-  -->
-  <!-- Подключаем главный модуль -->
-  <script src="src/main.js" type="module"></script>
-
-  <!-- Блокировка жестов (перенесено из main.js) -->
+  
   <script>
-    document.addEventListener('touchstart', function(e) {
-      if (e.touches.length > 1) e.preventDefault();
-    }, { passive: false });
+    // Единая точка инициализации
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('=== ИНИЦИАЛИЗАЦИЯ ИГРЫ ===');
+      
+      // Инициализация планетарного фона
+      if (window.planetBackground && window.planetBackground.init) {
+        window.planetBackground.init();
+      }
+      
+      // Отложенный запуск остального после загрузки состояния
+      setTimeout(function() {
+        if (!window.gameState || !window.gameMetrics) {
+          console.warn('gameState не инициализирован — ожидаем save-system.js');
+          return;
+        }
 
-    document.addEventListener('gesturestart', function(e) {
-      e.preventDefault();
-    }, { passive: false });
+        // Обновление языка и переводов
+        if (typeof window.updateLanguageFlag === 'function') {
+          window.updateLanguageFlag();
+        }
+        if (typeof window.updateAllTranslations === 'function') {
+          window.updateAllTranslations();
+        }
 
-    document.addEventListener('gesturechange', function(e) {
-      e.preventDefault();
-    }, { passive: false });
+        // Инициализация магазина и достижений
+        if (window.shopSystem && typeof window.shopSystem.init === 'function') {
+          window.shopSystem.init();
+        }
+        if (window.achievementsSystem && typeof window.achievementsSystem.init === 'function') {
+          window.achievementsSystem.init();
+        }
 
-    document.addEventListener('gestureend', function(e) {
-      e.preventDefault();
-    }, { passive: false });
+        // Обновление интерфейса
+        if (typeof window.updateContinueButton === 'function') {
+          window.updateContinueButton();
+        }
+        if (window.gameFunctions) {
+          window.gameFunctions.updateHUD();
+          window.gameFunctions.updateUpgradeButtons();
+          window.gameFunctions.setLocation(window.gameState.currentLocation || 'mercury');
+        }
+
+        console.log('✅ Игра инициализирована');
+      }, 300);
+    });
   </script>
 
-  <!-- Отладочные функции (остаются) -->
+  <!-- Отладочные кнопки (скрыты) -->
+  <div style="position: fixed; bottom: 10px; left: 10px; z-index: 10000; display: none;">
+    <button onclick="debugSave()" style="background: #2196F3; color: white; padding: 5px 10px; border: none; border-radius: 5px; margin: 2px;">Debug Save</button>
+    <button onclick="clearSave()" style="background: #f44336; color: white; padding: 5px 10px; border: none; border-radius: 5px; margin: 2px;">Clear Save</button>
+    <button onclick="console.log(window.gameState)" style="background: #4CAF50; color: white; padding: 5px 10px; border: none; border-radius: 5px; margin: 2px;">Log State</button>
+  </div>
+
   <script>
-    // Функция для отладки сохранения
+    // Функции отладки
     function debugSave() {
       const saved = localStorage.getItem('cosmicBlocksSave');
       console.log('=== ДЕБАГ СОХРАНЕНИЯ ===');
-      
       if (saved) {
         try {
           const data = JSON.parse(saved);
@@ -189,8 +207,6 @@
             location: data.gameState?.currentLocation,
             version: data.version
           });
-          
-          // Показываем всплывающее окно с информацией
           alert(`Сохранение найдено!\nКристаллы: ${data.gameState?.coins}\nУрон: ${data.gameState?.totalDamageDealt}\nПланета: ${data.gameState?.currentLocation}\nВремя: ${new Date(data.timestamp).toLocaleString()}`);
         } catch (e) {
           console.error('❌ Ошибка парсинга:', e);
@@ -202,28 +218,19 @@
       }
     }
     
-    // Функция для очистки сохранения
     function clearSave() {
       if (confirm('Очистить все сохранения?')) {
         localStorage.removeItem('cosmicBlocksSave');
         console.log('🗑️ Сохранение очищено');
         alert('Сохранение очищено!');
-        // window.updateContinueButton(); // Вызов может быть недоступен, если main.js не загрузился
         if (typeof window.updateContinueButton === 'function') {
-             window.updateContinueButton();
+          window.updateContinueButton();
         }
       }
     }
     
-    // Экспорт для консоли
     window.debugSave = debugSave;
     window.clearSave = clearSave;
   </script>
-  <div style="position: fixed; bottom: 10px; left: 10px; z-index: 10000; display: none;">
-    <button onclick="debugSave()" style="background: #2196F3; color: white; padding: 5px 10px; border: none; border-radius: 5px; margin: 2px;">Debug Save</button>
-    <button onclick="clearSave()" style="background: #f44336; color: white; padding: 5px 10px; border: none; border-radius: 5px; margin: 2px;">Clear Save</button>
-    <button onclick="console.log(window.gameState)" style="background: #4CAF50; color: white; padding: 5px 10px; border: none; border-radius: 5px; margin: 2px;">Log State</button>
-  </div>
-
 </body>
 </html>
